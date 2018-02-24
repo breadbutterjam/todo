@@ -6,6 +6,8 @@ function onLoad(argument) {
 	GetData();
 	FillProjectSelectBox();
 	AddEventListeners();
+	$("#projectSelection").focus();
+
 }
 
 function AddEventListeners()
@@ -17,7 +19,27 @@ function AddEventListeners()
 
 function TaskAdded(event)
 {
-	console.log("TaskAdded ::", event)	
+	// console.log("TaskAdded ::", event)
+	var newTask = $("#newTaskDetail").val();
+	var projectName = $("#projectSelection").val();
+
+	var taskHTMLStart = '<div class="task">'
+	var taskDoneButtonHTML = '<input type="button" class="taskDone"  value="Done" name="">'
+	var taskHTMLEnd = '</div>'
+
+	var taskHTML = taskHTMLStart + "Project : " + projectName + ' - ' + newTask + taskDoneButtonHTML + taskHTMLEnd;
+
+	$('.tasks').append(taskHTML);
+
+	ResetNewTaskFields();
+	$("#projectSelection").focus();
+
+}
+
+function ResetNewTaskFields()
+{
+	$("#newTaskDetail").val("");
+	$("#projectSelection").val(data.projects[0])
 }
 
 function ProjectSelectionChange(event)
@@ -98,7 +120,7 @@ function GetData()
 {
 	if (localStorage.todo)
 	{
-		
-		
+
+
 	}
 }

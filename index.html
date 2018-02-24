@@ -2,12 +2,23 @@
 <head>
 	<script type="text/javascript" src="../jQuery.js"></script>
 	<script type="text/javascript" src="script.js"></script>
+	<style type="text/css">
+		.task
+		{
+			padding-bottom: 5px;
+		}
+	</style>
 </head>
 <body onload="onLoad();">
 <div>
 	<span id="todaysDate"><h2>Monday, February 21</h2></span>
+	<div class="tasks">
+		<!-- <div class="task">Project: KeplerNG - update wireframe for authoring tool. <input type="button" class="taskDone" value="Done" name=""></div>
+		<div class="task">Project: ZeusLMS - Styleguide Discussion. <input type="button" class="taskDone"  value="Done" name=""></div> -->
+
+	</div>
 	<span>Project </span><select id="projectSelection"></select>
-	<span>Task</span><input type="text" id="task" name="task">
+	<span>Task</span><input type="text" id="newTaskDetail" name="task">
 	<input type="button" name="Add task" value="Add Task" id="addTaskButton">
 	<br>
 	<span id="TasksAdded"><h3>Tasks Completed Today</h3></span>
