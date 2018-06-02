@@ -1,204 +1,198 @@
-var mL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-var mS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
-var weekday = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+let mL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+let mS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
+let weekday = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-var delayCallAddProjectPrompt;
-
-var dailyTaskID = 0;
-
-var dailyObj;
-
-function onLoad(argument) {
-	// body...
-	// alert("A");
-	GetData();
-	FillProjectSelectBox();
-	AddEventListeners();
-	$("#projectSelection").focus();
-
-	CreateDailyObject();
-
-}
+let delayCallAddProjectPrompt;
 
 
-function CreateDailyObject()
+/* 
+	task object with project name and task details parameters. 
+	can extend this to 
+*/
+function task(projectName, taskDetails)
 {
-	var temp = JSON.stringify(dailyObjTemplate);
-	var temp2 = temp;
-	dailyObj = JSON.parse(temp2);
-}
-
-function AddEventListeners()
-{
-	$("#projectSelection").on("change", ProjectSelectionChange)
-	$("#addTaskButton").on("click", TaskAdded);
-	// $('.taskDone').on("click", TaskDone)
-	// $('.tasks').delegate("click", ".taskDone", TaskDone);
-}
-
-
-function TaskDone(event)
-{
-
-	var taskParent = $(this).parent();
-	var taskDetails = taskParent.children('.taskDetails')[0].textContent;
-	// console.log(taskDetails)
-	var taskID = taskParent[0].getAttribute("taskid");
-	// console.log(taskID) 
-	dailyObj.tasks[taskID].status = "completed";
-	taskParent.remove();
-
-
-}
-
-function AddDeleteTaskButton(taskId)
-{
-	var taskDeleteButtonHTML = '<input type="button" class="taskDelete"  value="Delete" name="">'
-	$('.task-id-' + taskId).append(taskDeleteButtonHTML)
-
-	$('.taskDelete').off("click")
-	$('.taskDelete').on("click", TaskDelete)
-}
-
-function AddTaskDoneButton(taskId)
-{
-	var taskDoneButtonHTML = '<input type="button" class="taskDone"  value="Done" name="">'
-	$('.task-id-' + taskId).append(taskDoneButtonHTML)
-
-	$('.taskDone').off("click")
-	$('.taskDone').on("click", TaskDone)
-}
-
-function AddTaskDetailsToTodo(taskId, projectName, taskDetails)
-{
-	var taskDetailStartHTML = '<span class=taskDetails>';
-	var taskDetailEndHTML = '</span>';
-
-
-
-	var taskDetailsHTML = taskDetailStartHTML + '<span class="project">' + projectName + '</span>' + taskDetails + taskDetailEndHTML;
-	$('.task-id-' + taskId).append(taskDetailsHTML)	
-
-}
-
-
-function TaskDelete(event)
-{
-
-}
-
-function TaskAdded(event)
-{
-	dailyTaskID++;
-	var taskID = getTodaysDate().ID + String(dailyTaskID).trim();
-
-	// console.log("TaskAdded ::", event)
-	var newTask = $("#newTaskDetail").val();
-	var projectName = $("#projectSelection").val();
-
-	var taskHTMLStart = '<div class="task task-id-'+ String(taskID).trim() +'" taskID="'+ taskID + '">'
-	var taskHTMLEnd = '</div>'
-
-	// var taskHTML = taskHTMLStart + taskDetailStartHTML + "Project : " + projectName + ' - ' + newTask + taskDetailEndHTML + taskDoneButtonHTML + taskHTMLEnd;
-	var taskHTML = taskHTMLStart + taskHTMLEnd;
-	$('.tasks').append(taskHTML);
+	this.project = projectName;
+	this.taskDetails = taskDetails; 
 	
-	
-	AddTaskDetailsToTodo(taskID, projectName, ' - ' + newTask)
-	AddTaskDoneButton(taskID);
-	AddDeleteTaskButton(taskID);
+	this.status = "backlog";
+	this.history = [];
 
-	ResetNewTaskFields();
-	$("#projectSelection").focus();
-
-	dailyObj.tasks[taskID] = {"project": projectName, "task-details": newTask, "status": "to-do"};
-
-}
-
-function SaveToJSON()
-{
-	data.dailyRecord[getTodaysDate().label] = dailyObj;
-}
-
-
-function ResetNewTaskFields()
-{
-	$("#newTaskDetail").val("");
-	$("#projectSelection").val(data.projects[0])
-}
-
-function ProjectSelectionChange(event)
-{
-	clearTimeout(delayCallAddProjectPrompt);
-	// console.log("ProjectSelectionChange ::", event)
-	var projectSelected = $("#projectSelection").val();
-	
-	if (projectSelected === 'Add')
+	this.ChangeStatus = function (newStatus)
 	{
-		delayCallAddProjectPrompt = setTimeout(function(){ GetProjectName();}, 100);
+		function changeLogEntry()
+		{
+			this.timestamp = new Date();
+			this.changeFrom = "";	
+		}
+
+
+		let changeLogEntryItem = new changeLogEntry();
+		changeLogEntryItem.changeFrom = this.status;
+		this.history.push(changeLogEntryItem);
+		this.status = newStatus;
 	}
 
 }
 
 
-function GetProjectName()
-{
-    
-    var projectName = prompt("Please enter New Project Name:", "");
-    if (projectName == null || projectName == "") {
-        console.log("User cancelled the prompt.");
-    } else {
-        //txt = "Hello " + person + "! How are you today?";
-    	AddProject(projectName);    
-    }
+/* 
+	projects will contain an array of projects for which tasks are already added. This is used for autocomplete
+	tasks will contain data about the tasks
+*/
+let tododata = {
+	"projects": [],
+	"tasks":[]
+};
 
-    FillProjectSelectBox();
-    //document.getElementById("demo").innerHTML = txt;
 
+function onLoad(argument) {
+	// body...
+	//alert("A");
+	AddEventListeners();
+	GetData();
+	InitAutoComplete();
+
+	ResetNewTaskFields();
 }
 
-function AddProject(projectName)
+
+/* 
+	add eventlisteners here 
+*/
+function AddEventListeners()
 {
-	data.projects[data.projects.length - 1] = projectName; 
-	data.projects.push("Add");
+	document.getElementById("add-task").addEventListener("click", AddTask)
 }
 
 
-function FillProjectSelectBox()
+/* 
+	function creates a new task and adds it to the backlog. 
+	internally, it will also check if the project is new, if it is, the new project is added to the project list
+*/
+function AddTask()
 {
-	$("#projectSelection").html("");
-	var projects = data.projects;
-	var nProjects = projects.length;
+	//add project to project list, if it is not already added
+	AddProject();
+	
+	let newTask = createTask(); 
+	tododata.tasks.push(newTask)
 
-	var optionStringStart = '<option value="'; 
-	var optionStringEnd = '</option>'
 
-	var optoinStringFull = '';
+	SaveData();
 
-	for (var i=0; i<nProjects; i++)
+	//reset new task fields
+	ResetNewTaskFields();
+}
+
+/* 
+	add project to todo-data
+*/
+function AddProject()
+{
+	
+	let projectName = document.getElementById("project-name").value;
+	if (tododata.projects.indexOf(projectName) === -1)
 	{
-		optoinStringFull += optionStringStart +  projects[i] + '">' + projects[i] + optionStringEnd
-	}	
-
-	// console.log(optoinStringFull)
-	$("#projectSelection").html(optoinStringFull)
-
+		tododata.projects.push(projectName);
+		//console.log("Project Added ", projectName);
+		SaveData();
+	}
 }
 
+
+/* 
+	Reset new task fields
+*/
+function ResetNewTaskFields()
+{
+	//reset project name text field
+	document.getElementById("project-name").value = "";
+
+	//reset task details field
+	document.getElementById("task-name").value = "";
+
+	//set focus to project name field
+	document.getElementById("project-name").focus();
+}
+
+/* 
+	initialize autocomplete if project list is not empty
+
+*/
+function InitAutoComplete()
+{
+	if (tododata.projects.length > 0)
+	{
+		autocomplete(document.getElementById("project-name"), tododata.projects);
+	}
+	
+	
+}
+
+
+/*
+	function checks if data exists in local storage, if it does, it retrieves it and stores it in todo-data, 
+	if no data exists, a localstorage variable is initialized 
+*/ 
+function GetData()
+{
+	if (localStorage.tododata)
+	{
+		tododata = JSON.parse(localStorage.tododata);
+	}
+	else
+	{
+		localStorage.tododata = "";
+	}
+}
+
+
+/* 
+	function saves data in local storage
+*/
+function SaveData()
+{
+	localStorage.tododata = JSON.stringify(tododata);
+}
+
+
+/* 
+	function to return object in the format of tasks. 
+	while creating a task the status will be set as not-started 
+*/
+function createTask()
+{
+	//store project name value
+	let projectName = document.getElementById("project-name").value;
+
+	//store task details value
+	let taskDetails = document.getElementById("task-name").value;
+
+	//create a new task object with project name and task details values. 
+	let taskObject = new task(projectName, taskDetails);
+
+	//return the task object
+	return taskObject
+}
+
+
+/*
+	date functions start here 
+*/
 function getTodaysDate()
 {
-	var a = new Date();
-	var month = mL[a.getMonth()];
-	var date = a.getDate();
-	var day = weekday[a.getDay()];
-	var year = a.getFullYear();
+	let a = new Date();
+	let month = mL[a.getMonth()];
+	let date = a.getDate();
+	let day = weekday[a.getDay()];
+	let year = a.getFullYear();
 
 	//Monday, February 21
-	var dateStringDisplay = day + ", " + month + " " + date;
-	var dateLabel = date + "-" + mS[a.getMonth()] + "-" + year;
-	var ID = PreceedingZeroes(date, 2) + PreceedingZeroes(a.getMonth()+1, 2) + String(year).trim(); 
+	let dateStringDisplay = day + ", " + month + " " + date;
+	let dateLabel = date + "-" + mS[a.getMonth()] + "-" + year;
+	let ID = PreceedingZeroes(date, 2) + PreceedingZeroes(a.getMonth()+1, 2) + String(year).trim(); 
 
-	var retObj = {};
+	let retObj = {};
 	retObj.display = dateStringDisplay;
 	retObj.label = dateLabel;
 	retObj.ID = ID
@@ -211,8 +205,8 @@ function getTodaysDate()
 
 function PreceedingZeroes(number, totalLen)
 {
-	var sZero = "";
-	for (var i=0; i<totalLen; i++)
+	let sZero = "";
+	for (let i=0; i<totalLen; i++)
 	{
 		sZero += "0";
 	}
@@ -220,32 +214,9 @@ function PreceedingZeroes(number, totalLen)
 	return (sZero + String(number).trim()).slice(-1*totalLen);
 }
 
-
-function GetData()
-{
-	if (localStorage.todo)
-	{
-
-
-	}
-}
-
 function onbefore()
 {
 	// alert("A");
 	console.log("a")
 	return 0;
-}
-
-var data  = {
-	"lastMod" : "",
-	"projects": ["Select a project", "KeplerNG", "Zeus LMS", "Add"],
-	"dailyRecord": {
-
-	}	
-}
-
-
-var dailyObjTemplate = {
-	"tasks": []
 }
