@@ -5,6 +5,8 @@ let weekday = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
 let delayCallAddProjectPrompt;
 
 
+
+
 /* 
 	task object with project name and task details parameters. 
 	can extend this to 
@@ -31,6 +33,33 @@ function task(projectName, taskDetails)
 		this.history.push(changeLogEntryItem);
 		this.status = newStatus;
 	}
+
+}
+
+/* 
+
+function takes task object as a parameter and returns the html to be added to the task card
+the task details object must contain the following 
+- projectName 
+- taskDetails
+
+*/
+function getTaskCardHTML(oTask)
+{
+	let htmlTaskCardParent = '<div class="task-card">'
+	
+
+	let htmlProjectName = '<div class="task-project-name task-card-content">'
+	htmlProjectName += oTask.project;
+	htmlProjectName += '</div>';
+	
+	
+	let htmlTaskDetails = '<div class="task-details task-card-content">'
+	htmlTaskDetails += oTask.taskDetails
+	htmlTaskDetails += '</div>';
+
+	let returnHTML = htmlTaskCardParent + htmlProjectName + htmlTaskDetails + '</div>';
+	return returnHTML;
 
 }
 
@@ -82,7 +111,39 @@ function AddTask()
 
 	//reset new task fields
 	ResetNewTaskFields();
+
+
+	//create task card
+	AddTaskCard(newTask);
 }
+
+
+/* 
+	function to add a task card
+	function takes two paramters, 
+	task - this is the task object to be added. 
+	parent - this is the html element to which the card is to be added. if there is no parent specified, it is added to backlog swim lane
+*/
+function AddTaskCard(task, cardParent)
+{
+	
+	//get html for task card
+	let htmlTaskCard = getTaskCardHTML(task)
+	
+
+	//if there is no parent specified, it is added to backlog swim lane
+	if (cardParent === undefined)
+	{
+		cardParent = $("#backlog-swimlane .swim-lane-task-holder");
+	}
+
+	//add html to div
+	// $('')[0].innerHTML = htmlTaskCard;
+	// $("#backlog-swimlane .swim-lane-task-holder").append(htmlTaskCard)
+
+	cardParent.append(htmlTaskCard);
+}
+
 
 /* 
 	add project to todo-data
@@ -173,6 +234,47 @@ function createTask()
 
 	//return the task object
 	return taskObject
+}
+
+
+/* 
+
+use this function to regenerate the state as found in the local storage. 
+
+
+*/
+function RestoreState()
+{
+	let tasks = tododata.tasks;
+	let numberOfTasks = tasks.length;
+
+	let currentTask;
+	let taskStatus = '';
+	let taskSwimLane;
+	for (let i=0; i<numberOfTasks; i++)
+	{
+		currentTask = tasks[i];
+
+		taskStatus = currentTask.status;
+		switch (taskStatus)
+		{
+			case "backlog":
+			taskSwimLane = $("#backlog-swimlane .swim-lane-task-holder");
+			break;
+
+			case "active":
+			break;
+
+			case "completed":
+			break;
+
+			default:
+			break;
+		}
+
+
+		AddTaskCard(currentTask, taskSwimLane)
+	}
 }
 
 

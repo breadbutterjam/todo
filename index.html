@@ -2,11 +2,12 @@
 <head>
 	<script type="text/javascript" src="../jQuery.js"></script>
 	<script type="text/javascript" src="autocomplete.js"></script>
+	<script type="text/javascript" src="jquery-ui.min.js"></script>
 	<script type="text/javascript" src="script.js"></script>
 	<link rel="stylesheet" type="text/css" href="autocomplete.css">
-	<style type="text/css">
-		
-	</style>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<link rel="stylesheet" type="text/css" href="jquery-ui.min.css">
+
 </head>
 
 <body onload="onLoad();">
@@ -17,5 +18,25 @@
  	<textarea id="task-name" type="text" name="task-name" class="inputStyling" placeholder="Enter task"></textarea>
  </div>
  <input type="button" id="add-task" value="Add Task">
+ 
+ <!-- <div class="task-card">
+	<div class="task-project-name task-card-content">Project Name</div>
+	<div class="task-details task-card-content">udpate score board to reflect real score 1500s</div>
+ </div> -->
+ <div id="swim-lane-container">
+	<div id="backlog-swimlane" class="swimlane">
+		<div class="swim-lane-header">Backlog</div>
+		<div class="swim-lane-task-holder"></div>
+
+	</div>
+	<div id="currently-doing-swimlane" class="swimlane">
+		<div class="swim-lane-header">Currently Doing</div>		
+		<div class="swim-lane-task-holder"></div>		
+	</div>
+	<div id="completed-swimlane" class="swimlane">
+		<div class="swim-lane-header">Completed</div>
+		<div class="swim-lane-task-holder"></div>		
+	</div>
+ </div>
 </body>
 </html>
