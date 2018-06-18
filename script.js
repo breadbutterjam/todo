@@ -4,7 +4,8 @@ let weekday = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
 
 let delayCallAddProjectPrompt;
 
-
+//variable used to store the maximum number used as ID
+let maxID;
 
 
 /* 
@@ -16,6 +17,8 @@ function task(projectName, taskDetails)
 	this.project = projectName;
 	this.taskDetails = taskDetails; 
 	
+	this.id = getNewID();
+
 	this.status = "backlog";
 	this.history = [];
 
@@ -38,6 +41,37 @@ function task(projectName, taskDetails)
 
 /* 
 
+function gets maximum ID from stored data
+
+*/
+function getMaxID()
+{
+
+	for (let i=0; i<tododata.tasks.length; i++)
+	{
+		if (tododata.tasks[i].id > maxID)
+		{
+			maxID = tododata.tasks[i].id;
+		}
+	}
+
+}
+
+/* 
+
+function generates a new task ID
+
+*/
+function getNewID()
+{
+	let newID;
+	newID = maxID + 1;
+	maxID = newID;
+	return newID;
+}
+
+/* 
+
 function takes task object as a parameter and returns the html to be added to the task card
 the task details object must contain the following 
 - projectName 
@@ -46,7 +80,9 @@ the task details object must contain the following
 */
 function getTaskCardHTML(oTask)
 {
-	let htmlTaskCardParent = '<div class="task-card">'
+	let htmlTaskCardParent = '<div class="task-card task-id-' + String(oTask.id).trim() +'" task-id="';
+	htmlTaskCardParent += String(oTask.id).trim();
+	htmlTaskCardParent += '">'
 	
 
 	let htmlProjectName = '<div class="task-project-name task-card-content">'
@@ -82,7 +118,38 @@ function onLoad(argument) {
 	InitAutoComplete();
 
 	ResetNewTaskFields();
+
+	RestoreState();
+
+	//do away
+	makeSwimlanesSameHeight();
+
+
+	// MakeTaskCardsDraggable();
+	MakeSwimLanesDroppable();
 }
+
+/* 
+
+DO-AWAY: WRITE BETTER CSS TO DO AWAY WITH THIS FUNCTION
+this function loops through all swimlanes, and makes all swimlanes of the same height
+
+*/
+function makeSwimlanesSameHeight()
+{
+	let swimlanes = $('.swim-lane-task-holder');
+	let maxHeight = -1;
+	for (let i=0; i<swimlanes.length; i++)
+	{
+		if ($(swimlanes[i]).height() > maxHeight)
+		{
+			maxHeight = $(swimlanes[i]).height();
+		} 
+	}
+
+	swimlanes.height(maxHeight);
+}
+
 
 
 /* 
@@ -93,6 +160,81 @@ function AddEventListeners()
 	document.getElementById("add-task").addEventListener("click", AddTask)
 }
 
+
+/* 
+
+function to determine if a task card should revert. shouldTaskCardRevert
+
+*/
+
+/* 
+
+make task cards draggable
+
+*/
+function MakeTaskCardsDraggable()
+{
+	makeMeDraggable($('.task-card'));
+}
+
+
+/* 
+
+function takes selector as a parameter and makes the elements specified in the selector draggable
+used to make all tasks cards draggable as well as while adding new task cards after it has been called initially. 
+
+*/
+function makeMeDraggable(elems)
+{
+	elems.draggable();
+	elems.draggable({
+		zIndex: 100,
+		revert: "invalid"
+	  });
+}
+
+
+
+
+/* 
+
+make swimlanes droppable 
+
+*/
+function MakeSwimLanesDroppable()
+{
+	$('.swim-lane-task-holder').droppable();
+	$('.swim-lane-task-holder').on("drop", TaskCardDropped);
+	/* $('.swim-lane-task-holder').droppable({
+		drop: function(event, ui){
+			console.log("dropped");
+			console.log(event);
+			console.log(ui);
+			console.log(this)
+		}
+	}) */
+
+}
+
+
+/* 
+function to be called when task card is dropped in the swimlane
+*/
+function TaskCardDropped(event, ui)
+{
+	// console.log(event, ui)
+	/* console.log("dropped");
+	console.log(event);
+	console.log(ui);
+	console.log(this); */
+
+
+	let taskId = $(ui.draggable[0]).attr("task-id");
+	let oTask = getTask(taskId);
+
+	$(ui.draggable[0]).remove();
+	AddTaskCard(oTask, $(this));
+}
 
 /* 
 	function creates a new task and adds it to the backlog. 
@@ -115,6 +257,25 @@ function AddTask()
 
 	//create task card
 	AddTaskCard(newTask);
+}
+
+/* 
+
+function returns the task object given the task ID
+
+*/
+function getTask(taskID)
+{
+	let task;
+	for (let i=0; i<tododata.tasks.length; i++)
+	{
+		if (tododata.tasks[i].id === Number(taskID))
+		{
+			task = tododata.tasks[i];
+		}
+	}
+
+	return task;
 }
 
 
@@ -142,6 +303,10 @@ function AddTaskCard(task, cardParent)
 	// $("#backlog-swimlane .swim-lane-task-holder").append(htmlTaskCard)
 
 	cardParent.append(htmlTaskCard);
+
+	//make added task card draggable
+	makeMeDraggable($('.task-id-' + String(task.id).trim()));
+	
 }
 
 
@@ -200,10 +365,12 @@ function GetData()
 	if (localStorage.tododata)
 	{
 		tododata = JSON.parse(localStorage.tododata);
+		getMaxID();
 	}
 	else
 	{
 		localStorage.tododata = "";
+		maxID = 0;
 	}
 }
 
